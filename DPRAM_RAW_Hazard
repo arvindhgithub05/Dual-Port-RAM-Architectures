@@ -1,0 +1,62 @@
+module dual_port_ram_raw_hazard #(
+    parameter ADDR_WIDTH = 8,                  // Address width (e.g., 8 bits for 256 locations)
+    parameter DATA_WIDTH = 32                  // Data width (e.g., 32 bits)
+)(
+    input wire                      clk,       // System clock
+    input wire                      rst,       // Synchronous reset
+
+    // Port A (Write Port)
+    input wire                      en_a,      // Enable for Port A
+    input wire                      we_a,      // Write enable for Port A
+    input wire  [ADDR_WIDTH-1:0]    addr_a,    // Write address for Port A
+    input wire  [DATA_WIDTH-1:0]    din_a,     // Data input for Port A
+
+    // Port B (Read Port)
+    input wire                      en_b,      // Enable for Port B
+    input wire  [ADDR_WIDTH-1:0]    addr_b,    // Read address for Port B
+    output reg  [DATA_WIDTH-1:0]    dout_b     // Data output for Port B
+);
+
+    // Declare the actual RAM array
+    reg [DATA_WIDTH-1:0] mem [0:(1<<ADDR_WIDTH)-1];
+
+    // Validity bits to track which locations have been written to
+    reg valid [0:(1<<ADDR_WIDTH)-1];
+
+    integer i;
+
+    // On reset, mark all locations as invalid (unwritten)
+    always @(posedge clk) begin
+        if (rst) begin
+            for (i = 0; i < (1 << ADDR_WIDTH); i = i + 1)
+                valid[i] <= 1'b0;
+        end
+    end
+
+    // Write logic for Port A
+    always @(posedge clk) begin
+        if (!rst && en_a && we_a) begin
+            mem[addr_a] <= din_a;     // Perform write
+            valid[addr_a] <= 1'b1;    // Mark this address as valid
+        end
+    end
+
+    // Read logic for Port B with RAW hazard forwarding
+    always @(posedge clk) begin
+        if (!rst && en_b) begin
+            if (we_a && en_a && (addr_a == addr_b)) begin
+                // RAW hazard: read and write to same address in same cycle
+                dout_b <= din_a;       // Forward write data directly to output
+            end
+            else if (valid[addr_b]) begin
+                // Valid data has been written before — safe to read
+                dout_b <= mem[addr_b];
+            end
+            else begin
+                // Invalid (unwritten) address — return HIGH
+                dout_b <= 32'hFFFFFFFF;
+            end
+        end
+    end
+
+endmodule
