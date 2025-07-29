@@ -1,6 +1,7 @@
 # Dual-Port-RAM-Architectures
 
 1. Simple Dual Port RAM
+
 ✅ Features:
 - Parameterized depth and width
 - Dual independent ports (Port A and Port B)
