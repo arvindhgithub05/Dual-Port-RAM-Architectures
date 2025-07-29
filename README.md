@@ -42,6 +42,6 @@ Both ports operate fully independently, supporting concurrent reads/writes and b
 If both clk_a and clk_b try to write to the same address in the same cycle, the behavior is unpredictable, especially on ASICs or FPGAs without true multi-port memory blocks.
 
 ✅ Solution Approach:
-Conflict detection (when we_a and we_b are both high and addresses match)
-A simple priority scheme (e.g., give Port A higher priority)
-Register updates only if no conflict OR controlled conflict resolution
+- Conflict detection (when we_a and we_b are both high and addresses match)
+- A simple priority scheme (e.g., give Port A higher priority)
+- Register updates only if no conflict OR controlled conflict resolution
